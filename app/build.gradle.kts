@@ -58,4 +58,6 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     implementation("androidx.compose.runtime:runtime-saveable")
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
+
 }
