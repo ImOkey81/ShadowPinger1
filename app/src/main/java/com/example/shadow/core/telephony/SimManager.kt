@@ -14,9 +14,9 @@ class SimManager(private val context: Context) {
     @RequiresApi(Build.VERSION_CODES.P)
     @SuppressLint("MissingPermission")
     fun getAllSimCards(): List<SimInfo> {
-        val subscriptionManager = context.getSystemService(
-            Context.TELEPHONY_SUBSCRIPTION_SERVICE
-        ) as SubscriptionManager
+        val subscriptionManager =
+            context.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE)
+                    as SubscriptionManager
 
         val infos: List<SubscriptionInfo> =
             subscriptionManager.activeSubscriptionInfoList ?: emptyList()
