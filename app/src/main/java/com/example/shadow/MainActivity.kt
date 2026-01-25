@@ -164,6 +164,9 @@ private fun AppContent() {
                         simCards.value = simManager.getAllSimCards()
                     }
                 },
+                onOpenStatus = {
+                    screen.value = AppScreen.STATUS
+                },
                 canContinue = permissions.value.all { it.granted } &&
                     simCards.value.isNotEmpty() &&
                     simCards.value.all { simMappings[it.subscriptionId] != null },
@@ -180,7 +183,10 @@ private fun AppContent() {
                     progress = AgentProgress(subnetsTotal = 0, subnetsCompleted = 0, ipsTested = 0),
                     lastErrors = emptyList(),
                 )
-                AgentStatusScreen(status = status)
+                AgentStatusScreen(
+                    status = status,
+                    onOpenSettings = { screen.value = AppScreen.SETTINGS },
+                )
             }
         }
 

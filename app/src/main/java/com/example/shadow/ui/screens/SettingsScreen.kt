@@ -26,6 +26,7 @@ fun SettingsScreen(
     onPermissionToggle: (PermissionItem) -> Unit,
     onOperatorSelected: (subscriptionId: Int, operator: Operator) -> Unit,
     onContinue: () -> Unit,
+    onOpenStatus: () -> Unit,
     canContinue: Boolean,
 ) {
     Column(
