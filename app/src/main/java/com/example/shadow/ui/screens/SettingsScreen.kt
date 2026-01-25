@@ -36,9 +36,6 @@ fun SettingsScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text(text = "Экран настроек")
-        Button(onClick = onOpenStatus) {
-            Text(text = "К статусу")
-        }
         Text(text = "5.3.1 Разрешения")
         permissions.forEach { item ->
             Row(
@@ -61,11 +58,6 @@ fun SettingsScreen(
             simCards.forEach { sim ->
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(text = "Локальное имя: ${sim.displayName}")
-                    Text(text = "Оператор сети: ${sim.carrierName}")
-                    Text(text = "Слот: ${sim.slotIndex}")
-                    if (!sim.phoneNumber.isNullOrBlank()) {
-                        Text(text = "Номер: ${sim.phoneNumber}")
-                    }
                     Text(text = "UID SIM: ${sim.simUid}")
                     OperatorSelector(
                         selected = simMappings[sim.subscriptionId],
