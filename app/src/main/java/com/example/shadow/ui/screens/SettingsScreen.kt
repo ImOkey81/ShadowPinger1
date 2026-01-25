@@ -34,7 +34,8 @@ fun SettingsScreen(
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text(text = "Permissions")
+        Text(text = "Экран настроек")
+        Text(text = "5.3.1 Разрешения")
         permissions.forEach { item ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -42,33 +43,35 @@ fun SettingsScreen(
             ) {
                 Text(text = item.label)
                 Button(onClick = { onPermissionToggle(item) }) {
-                    Text(text = if (item.granted) "Granted" else "Grant")
+                    Text(text = if (item.granted) "Разрешено" else "Разрешить")
                 }
             }
         }
 
         HorizontalDivider()
 
-        Text(text = "SIM cards")
-        simCards.forEach { sim ->
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = "${sim.displayName} • ${sim.carrierName} • slot ${sim.slotIndex}",
-                )
-                Text(text = "UID: ${sim.simUid}")
-                OperatorSelector(
-                    selected = simMappings[sim.subscriptionId],
-                    onSelected = { operator -> onOperatorSelected(sim.subscriptionId, operator) },
-                )
+        Text(text = "5.3.2 SIM-карты")
+        if (simCards.isEmpty()) {
+            Text(text = "SIM-карты не найдены")
+        } else {
+            simCards.forEach { sim ->
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(text = "Локальное имя: ${sim.displayName}")
+                    Text(text = "UID SIM: ${sim.simUid}")
+                    OperatorSelector(
+                        selected = simMappings[sim.subscriptionId],
+                        onSelected = { operator -> onOperatorSelected(sim.subscriptionId, operator) },
+                    )
+                }
             }
         }
 
         Spacer(modifier = Modifier.height(8.dp))
         if (!canContinue) {
-            Text(text = "Map all SIMs and grant required permissions to activate the agent.")
+            Text(text = "❗ Пока все SIM не сопоставлены, агент НЕ активируется")
         }
         Button(onClick = onContinue, enabled = canContinue) {
-            Text(text = "Continue")
+            Text(text = "Продолжить")
         }
     }
 }
@@ -79,7 +82,7 @@ private fun OperatorSelector(
     onSelected: (Operator) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(text = "Operator")
+        Text(text = "Оператор")
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Operator.values().forEach { operator ->
                 FilterChip(
