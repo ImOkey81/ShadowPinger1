@@ -5,8 +5,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.shadow.core.permissions.PermissionType
 import com.example.shadow.core.telephony.Operator
 import com.example.shadow.core.telephony.SimInfo
 
@@ -25,6 +26,7 @@ fun SettingsScreen(
     onPermissionToggle: (PermissionItem) -> Unit,
     onOperatorSelected: (subscriptionId: Int, operator: Operator) -> Unit,
     onContinue: () -> Unit,
+    onOpenStatus: () -> Unit,
     canContinue: Boolean,
 ) {
     Column(
@@ -33,7 +35,8 @@ fun SettingsScreen(
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text(text = "Permissions")
+        Text(text = "Экран настроек")
+        Text(text = "5.3.1 Разрешения")
         permissions.forEach { item ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -41,30 +44,35 @@ fun SettingsScreen(
             ) {
                 Text(text = item.label)
                 Button(onClick = { onPermissionToggle(item) }) {
-                    Text(text = if (item.granted) "Granted" else "Grant")
+                    Text(text = if (item.granted) "Разрешено" else "Разрешить")
                 }
             }
         }
 
         HorizontalDivider()
 
-        Text(text = "SIM cards")
-        simCards.forEach { sim ->
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(text = "${sim.displayName} • ${sim.carrierName} • slot ${sim.slotIndex}")
-                OperatorSelector(
-                    selected = simMappings[sim.subscriptionId],
-                    onSelected = { operator -> onOperatorSelected(sim.subscriptionId, operator) },
-                )
+        Text(text = "5.3.2 SIM-карты")
+        if (simCards.isEmpty()) {
+            Text(text = "SIM-карты не найдены")
+        } else {
+            simCards.forEach { sim ->
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(text = "Локальное имя: ${sim.displayName}")
+                    Text(text = "UID SIM: ${sim.simUid}")
+                    OperatorSelector(
+                        selected = simMappings[sim.subscriptionId],
+                        onSelected = { operator -> onOperatorSelected(sim.subscriptionId, operator) },
+                    )
+                }
             }
         }
 
         Spacer(modifier = Modifier.height(8.dp))
         if (!canContinue) {
-            Text(text = "Map all SIMs and grant required permissions to activate the agent.")
+            Text(text = "❗ Пока все SIM не сопоставлены, агент НЕ активируется")
         }
         Button(onClick = onContinue, enabled = canContinue) {
-            Text(text = "Continue")
+            Text(text = "Продолжить")
         }
     }
 }
@@ -75,7 +83,7 @@ private fun OperatorSelector(
     onSelected: (Operator) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(text = "Operator")
+        Text(text = "Оператор")
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Operator.values().forEach { operator ->
                 FilterChip(
@@ -89,7 +97,7 @@ private fun OperatorSelector(
 }
 
 data class PermissionItem(
-    val key: String,
+    val type: PermissionType,
     val label: String,
     val granted: Boolean,
 )

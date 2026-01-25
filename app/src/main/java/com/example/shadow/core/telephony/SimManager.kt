@@ -7,12 +7,11 @@ import android.os.Build
 import android.telephony.SubscriptionInfo
 import android.telephony.SubscriptionManager
 import android.telephony.TelephonyManager
-import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 
 class SimManager(private val context: Context) {
-    @RequiresApi(Build.VERSION_CODES.P)
     @SuppressLint("MissingPermission")
+    @RequiresPermission(Manifest.permission.READ_PHONE_STATE)
     fun getAllSimCards(): List<SimInfo> {
         val subscriptionManager =
             context.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE)
@@ -29,6 +28,7 @@ class SimManager(private val context: Context) {
                 carrierName = info.carrierName?.toString().orEmpty(),
                 slotIndex = info.simSlotIndex,
                 isEmbedded = info.isEmbedded,
+                simUid = info.iccId ?: info.subscriptionId.toString(),
             )
         }
     }

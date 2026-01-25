@@ -1,9 +1,12 @@
 package com.example.shadow
 
+import android.Manifest
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -24,6 +27,11 @@ import com.example.shadow.core.agent.AgentState
 import com.example.shadow.core.agent.AgentStateMachine
 import com.example.shadow.core.agent.AgentStatus
 import com.example.shadow.core.device.HwidProvider
+import com.example.shadow.core.network.BackendResult
+import com.example.shadow.core.network.FakeBackendClient
+import com.example.shadow.core.permissions.PermissionManager
+import com.example.shadow.core.permissions.PermissionType
+import com.example.shadow.core.storage.AuthTokenStore
 import com.example.shadow.core.telephony.Operator
 import com.example.shadow.core.telephony.SimManager
 import com.example.shadow.ui.screens.AgentStatusScreen
@@ -60,21 +68,29 @@ private fun AppContent() {
     val stateMachine = remember { AgentStateMachine(repository) }
     val hwid = remember { HwidProvider(context).getOrCreate() }
     val simManager = remember { SimManager(context) }
+    val authTokenStore = remember { AuthTokenStore(context) }
+    val backendClient = remember { FakeBackendClient() }
+    val permissionManager = remember { PermissionManager(context) }
     val scope = rememberCoroutineScope()
 
     val screen = rememberSaveable { mutableStateOf(AppScreen.REGISTRATION) }
+    val registrationError = remember { mutableStateOf<String?>(null) }
+    val authorizationError = remember { mutableStateOf<String?>(null) }
+
     val permissions = remember {
-        mutableStateOf(
-            listOf(
-                PermissionItem("foreground", "Foreground service", false),
-                PermissionItem("battery", "Ignore battery optimizations", false),
-                PermissionItem("network", "Mobile network access", false),
-                PermissionItem("sim", "SIM access", false),
-            )
-        )
+        mutableStateOf(buildPermissionItems(permissionManager))
     }
     val simMappings = remember { mutableStateMapOf<Int, Operator?>() }
     val simCards = remember { mutableStateOf(simManager.getAllSimCards()) }
+
+    val simPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions(),
+    ) {
+        permissions.value = buildPermissionItems(permissionManager)
+        if (permissionManager.isGranted(PermissionType.SIM_ACCESS)) {
+            simCards.value = simManager.getAllSimCards()
+        }
+    }
 
     LaunchedEffect(Unit) {
         if (stateMachine.currentState != AgentState.INIT) {
@@ -82,28 +98,64 @@ private fun AppContent() {
         }
     }
 
+    LaunchedEffect(permissions.value) {
+        if (permissionManager.isGranted(PermissionType.SIM_ACCESS)) {
+            simCards.value = simManager.getAllSimCards()
+        }
+    }
+
     Scaffold(modifier = Modifier.fillMaxSize()) { padding ->
         when (screen.value) {
-            AppScreen.REGISTRATION -> RegistrationScreen { login, password ->
-                stateMachine.transition(AgentState.REGISTERED)
-                screen.value = AppScreen.AUTHORIZATION
+            AppScreen.REGISTRATION -> RegistrationScreen(
+                errorMessage = registrationError.value,
+            ) { login, password ->
+                scope.launch {
+                    when (val result = backendClient.register(login, password)) {
+                        is BackendResult.Success -> {
+                            registrationError.value = null
+                            stateMachine.transition(AgentState.REGISTERED)
+                            screen.value = AppScreen.AUTHORIZATION
+                        }
+                        is BackendResult.Failure -> {
+                            registrationError.value = result.message
+                        }
+                    }
+                }
             }
-            AppScreen.AUTHORIZATION -> AuthorizationScreen { _, _ ->
-                stateMachine.transition(AgentState.AUTHORIZED)
-                screen.value = AppScreen.SETTINGS
+            AppScreen.AUTHORIZATION -> AuthorizationScreen(
+                errorMessage = authorizationError.value,
+            ) { login, password ->
+                scope.launch {
+                    when (val result = backendClient.authorize(login, password)) {
+                        is BackendResult.Success -> {
+                            authorizationError.value = null
+                            authTokenStore.saveToken(result.data)
+                            stateMachine.transition(AgentState.AUTHORIZED)
+                            screen.value = AppScreen.SETTINGS
+                        }
+                        is BackendResult.Failure -> {
+                            authorizationError.value = result.message
+                        }
+                    }
+                }
             }
             AppScreen.SETTINGS -> SettingsScreen(
                 permissions = permissions.value,
                 simCards = simCards.value,
                 simMappings = simMappings,
                 onPermissionToggle = { item ->
-                    permissions.value = permissions.value.map { existing ->
-                        if (existing.key == item.key) {
-                            existing.copy(granted = !existing.granted)
-                        } else {
-                            existing
-                        }
+                    when (item.type) {
+                        PermissionType.SIM_ACCESS -> simPermissionLauncher.launch(
+                            arrayOf(
+                                Manifest.permission.READ_PHONE_STATE,
+                                Manifest.permission.READ_PHONE_NUMBERS,
+                            ),
+                        )
+                        PermissionType.BATTERY_OPTIMIZATION ->
+                            context.startActivity(permissionManager.batteryOptimizationIntent())
+                        else -> Unit
                     }
+                    permissions.value = buildPermissionItems(permissionManager)
                 },
                 onOperatorSelected = { subscriptionId, operator ->
                     simMappings[subscriptionId] = operator
@@ -118,6 +170,9 @@ private fun AppContent() {
                         simCards.value = simManager.getAllSimCards()
                     }
                 },
+                onOpenStatus = {
+                    screen.value = AppScreen.STATUS
+                },
                 canContinue = permissions.value.all { it.granted } &&
                     simCards.value.isNotEmpty() &&
                     simCards.value.all { simMappings[it.subscriptionId] != null },
@@ -130,10 +185,14 @@ private fun AppContent() {
                     activeOperator = activeOperator,
                     activeSimLabel = activeSim?.displayName,
                     jobId = null,
+                    currentIp = null,
                     progress = AgentProgress(subnetsTotal = 0, subnetsCompleted = 0, ipsTested = 0),
                     lastErrors = emptyList(),
                 )
-                AgentStatusScreen(status = status)
+                AgentStatusScreen(
+                    status = status,
+                    onOpenSettings = { screen.value = AppScreen.SETTINGS },
+                )
             }
         }
 
@@ -143,4 +202,29 @@ private fun AppContent() {
             modifier = Modifier.padding(padding),
         )
     }
+}
+
+private fun buildPermissionItems(permissionManager: PermissionManager): List<PermissionItem> {
+    return listOf(
+        PermissionItem(
+            type = PermissionType.FOREGROUND_SERVICE,
+            label = "Foreground service",
+            granted = permissionManager.isGranted(PermissionType.FOREGROUND_SERVICE),
+        ),
+        PermissionItem(
+            type = PermissionType.BATTERY_OPTIMIZATION,
+            label = "Ignore battery optimizations",
+            granted = permissionManager.isGranted(PermissionType.BATTERY_OPTIMIZATION),
+        ),
+        PermissionItem(
+            type = PermissionType.MOBILE_NETWORK,
+            label = "Mobile network access",
+            granted = permissionManager.isGranted(PermissionType.MOBILE_NETWORK),
+        ),
+        PermissionItem(
+            type = PermissionType.SIM_ACCESS,
+            label = "SIM access",
+            granted = permissionManager.isGranted(PermissionType.SIM_ACCESS),
+        ),
+    )
 }

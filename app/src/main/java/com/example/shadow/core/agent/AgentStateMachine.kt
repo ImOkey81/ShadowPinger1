@@ -1,5 +1,7 @@
 package com.example.shadow.core.agent
 
+import android.util.Log
+
 class AgentStateMachine(private val repository: AgentRepository) {
     private val allowedTransitions: Map<AgentState, Set<AgentState>> = mapOf(
         AgentState.INIT to setOf(AgentState.REGISTERED),
@@ -19,10 +21,16 @@ class AgentStateMachine(private val repository: AgentRepository) {
     fun transition(target: AgentState): Boolean {
         val allowed = allowedTransitions[currentState].orEmpty()
         if (target !in allowed) {
+            Log.w(TAG, "Invalid transition ${currentState.name} -> ${target.name}")
             return false
         }
+        Log.i(TAG, "Transition ${currentState.name} -> ${target.name}")
         currentState = target
         repository.saveState(target)
         return true
+    }
+
+    companion object {
+        private const val TAG = "AgentStateMachine"
     }
 }
