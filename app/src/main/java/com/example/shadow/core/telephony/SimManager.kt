@@ -11,6 +11,7 @@ import androidx.annotation.RequiresPermission
 
 class SimManager(private val context: Context) {
     @SuppressLint("MissingPermission")
+    @RequiresPermission(Manifest.permission.READ_PHONE_STATE)
     fun getAllSimCards(): List<SimInfo> {
         val subscriptionManager =
             context.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE)

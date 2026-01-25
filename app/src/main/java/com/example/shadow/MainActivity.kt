@@ -84,9 +84,12 @@ private fun AppContent() {
     val simCards = remember { mutableStateOf(simManager.getAllSimCards()) }
 
     val simPermissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission(),
+        ActivityResultContracts.RequestMultiplePermissions(),
     ) {
         permissions.value = buildPermissionItems(permissionManager)
+        if (permissionManager.isGranted(PermissionType.SIM_ACCESS)) {
+            simCards.value = simManager.getAllSimCards()
+        }
     }
 
     LaunchedEffect(Unit) {
@@ -143,7 +146,10 @@ private fun AppContent() {
                 onPermissionToggle = { item ->
                     when (item.type) {
                         PermissionType.SIM_ACCESS -> simPermissionLauncher.launch(
-                            Manifest.permission.READ_PHONE_STATE,
+                            arrayOf(
+                                Manifest.permission.READ_PHONE_STATE,
+                                Manifest.permission.READ_PHONE_NUMBERS,
+                            ),
                         )
                         PermissionType.BATTERY_OPTIMIZATION ->
                             context.startActivity(permissionManager.batteryOptimizationIntent())
