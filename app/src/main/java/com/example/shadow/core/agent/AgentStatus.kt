@@ -7,6 +7,7 @@ data class AgentStatus(
     val activeOperator: Operator?,
     val activeSimLabel: String?,
     val jobId: String?,
+    val currentIp: String?,
     val progress: AgentProgress,
     val lastErrors: List<String>,
 )

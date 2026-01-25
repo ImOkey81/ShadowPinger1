@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun AuthorizationScreen(
+    errorMessage: String?,
     onAuthorize: (login: String, password: String) -> Unit,
 ) {
     val login = remember { mutableStateOf("") }
@@ -41,6 +42,9 @@ fun AuthorizationScreen(
             onValueChange = { password.value = it },
             label = { Text("Password") },
         )
+        if (!errorMessage.isNullOrBlank()) {
+            Text(text = errorMessage)
+        }
         Spacer(modifier = Modifier.height(8.dp))
         Button(onClick = { onAuthorize(login.value, password.value) }) {
             Text(text = "Authorize")

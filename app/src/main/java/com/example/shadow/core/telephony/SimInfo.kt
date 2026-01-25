@@ -7,4 +7,5 @@ data class SimInfo(
     val carrierName: String,
     val slotIndex: Int,
     val isEmbedded: Boolean,
+    val simUid: String,
 )
