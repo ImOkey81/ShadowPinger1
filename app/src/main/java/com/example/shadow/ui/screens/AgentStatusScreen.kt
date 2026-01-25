@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -12,7 +13,10 @@ import com.example.shadow.core.agent.AgentProgress
 import com.example.shadow.core.agent.AgentStatus
 
 @Composable
-fun AgentStatusScreen(status: AgentStatus) {
+fun AgentStatusScreen(
+    status: AgentStatus,
+    onOpenSettings: () -> Unit,
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -20,6 +24,9 @@ fun AgentStatusScreen(status: AgentStatus) {
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(text = "Agent status")
+        Button(onClick = onOpenSettings) {
+            Text(text = "Настройки")
+        }
         Text(text = "State: ${status.state}")
         Text(text = "Active SIM: ${status.activeSimLabel ?: "—"}")
         Text(text = "Active operator: ${status.activeOperator ?: "—"}")
