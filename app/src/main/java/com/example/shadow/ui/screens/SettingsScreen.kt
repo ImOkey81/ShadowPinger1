@@ -36,9 +36,6 @@ fun SettingsScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text(text = "Экран настроек")
-        Button(onClick = onOpenStatus) {
-            Text(text = "К статусу")
-        }
         Text(text = "5.3.1 Разрешения")
         permissions.forEach { item ->
             Row(
