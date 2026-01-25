@@ -24,6 +24,7 @@ fun AgentStatusScreen(status: AgentStatus) {
         Text(text = "Active SIM: ${status.activeSimLabel ?: "—"}")
         Text(text = "Active operator: ${status.activeOperator ?: "—"}")
         Text(text = "Job ID: ${status.jobId ?: "—"}")
+        Text(text = "IP tested: ${status.currentIp ?: "—"}")
         ProgressSection(progress = status.progress)
         if (status.lastErrors.isNotEmpty()) {
             Text(text = "Last errors:")

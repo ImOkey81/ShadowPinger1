@@ -5,8 +5,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.shadow.core.permissions.PermissionType
 import com.example.shadow.core.telephony.Operator
 import com.example.shadow.core.telephony.SimInfo
 
@@ -51,7 +52,10 @@ fun SettingsScreen(
         Text(text = "SIM cards")
         simCards.forEach { sim ->
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(text = "${sim.displayName} • ${sim.carrierName} • slot ${sim.slotIndex}")
+                Text(
+                    text = "${sim.displayName} • ${sim.carrierName} • slot ${sim.slotIndex}",
+                )
+                Text(text = "UID: ${sim.simUid}")
                 OperatorSelector(
                     selected = simMappings[sim.subscriptionId],
                     onSelected = { operator -> onOperatorSelected(sim.subscriptionId, operator) },
@@ -89,7 +93,7 @@ private fun OperatorSelector(
 }
 
 data class PermissionItem(
-    val key: String,
+    val type: PermissionType,
     val label: String,
     val granted: Boolean,
 )

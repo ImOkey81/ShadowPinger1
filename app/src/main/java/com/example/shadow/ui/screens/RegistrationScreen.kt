@@ -4,8 +4,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun RegistrationScreen(
+    errorMessage: String?,
     onRegister: (login: String, password: String) -> Unit,
 ) {
     val login = remember { mutableStateOf("") }
@@ -41,6 +42,9 @@ fun RegistrationScreen(
             onValueChange = { password.value = it },
             label = { Text("Password") },
         )
+        if (!errorMessage.isNullOrBlank()) {
+            Text(text = errorMessage)
+        }
         Spacer(modifier = Modifier.height(8.dp))
         Button(onClick = { onRegister(login.value, password.value) }) {
             Text(text = "Register")
