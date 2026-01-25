@@ -1,2 +1,4 @@
 ﻿# Android launcher icons (generated)
 app/src/main/res/mipmap-*/ic_launcher*
+.gradle/
+.idea/
