@@ -84,7 +84,7 @@ private fun AppContent() {
 
     Scaffold(modifier = Modifier.fillMaxSize()) { padding ->
         when (screen.value) {
-            AppScreen.REGISTRATION -> RegistrationScreen { _, _ ->
+            AppScreen.REGISTRATION -> RegistrationScreen { login, password ->
                 stateMachine.transition(AgentState.REGISTERED)
                 screen.value = AppScreen.AUTHORIZATION
             }
