@@ -8,7 +8,6 @@ import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
-import com.example.shadow.R
 
 class AgentForegroundService : Service() {
     override fun onCreate() {
@@ -17,7 +16,7 @@ class AgentForegroundService : Service() {
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("ShadowPinger")
             .setContentText("Agent is running")
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(android.R.drawable.stat_notify_sync)
             .setOngoing(true)
             .build()
         startForeground(NOTIFICATION_ID, notification)

@@ -1,12 +1,16 @@
 package com.example.shadow
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import com.example.shadow.core.agent.AgentProgress
 import com.example.shadow.core.agent.AgentRepository
 import com.example.shadow.core.agent.AgentState
@@ -31,9 +36,6 @@ import com.example.shadow.core.logging.LogBuffer
 import com.example.shadow.core.telephony.Operator
 import com.example.shadow.core.telephony.SimManager
 import com.example.shadow.ui.screens.AgentStatusScreen
-import com.example.shadow.ui.screens.AuthorizationScreen
-import com.example.shadow.ui.screens.PermissionItem
-import com.example.shadow.ui.screens.RegistrationScreen
 import com.example.shadow.ui.screens.SettingsScreen
 import com.example.shadow.ui.theme.ShadowTheme
 import java.util.UUID
@@ -52,8 +54,6 @@ class MainActivity : ComponentActivity() {
 }
 
 private enum class AppScreen {
-    REGISTRATION,
-    AUTHORIZATION,
     SETTINGS,
     STATUS,
 }
@@ -83,6 +83,7 @@ private fun AppContent() {
     }
     val simMappings = remember { mutableStateMapOf<Int, Operator?>() }
     val simCards = remember { mutableStateOf(simManager.getAllSimCards()) }
+    var isForegroundRunning by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         deviceId = deviceConfigStore.getOrCreateDeviceId()

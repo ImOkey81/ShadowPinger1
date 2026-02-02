@@ -28,16 +28,29 @@ fun AgentStatusScreen(
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text(text = "Agent status")
-        Text(text = "State: ${status.state}")
-        Text(text = "Active SIM: ${status.activeSimLabel ?: "—"}")
-        Text(text = "Active operator: ${status.activeOperator ?: "—"}")
-        Text(text = "Job ID: ${status.jobId ?: "—"}")
+        Text(text = "shadow\npinger")
+        Text(text = "Общие сведения")
+        InfoRow(label = "HWID", value = status.deviceId)
+        InfoRow(label = "Active SIM", value = status.activeSimLabel ?: "—")
+        InfoRow(label = "Connected", value = if (status.isConnected) "Да" else "Нет")
+        InfoRow(
+            label = "Active operator",
+            value = status.activeOperator?.name ?: "—",
+        )
+        InfoRow(label = "Выполнено задач", value = status.tasksCompleted.toString())
+        InfoRow(label = "Протестировано подсетей", value = status.subnetsTested.toString())
+
+        HorizontalDivider()
+
+        Text(text = "Текущая задача")
+        InfoRow(label = "Current Job ID", value = status.jobId ?: "—")
         ProgressSection(progress = status.progress)
-        if (status.lastErrors.isNotEmpty()) {
-            Text(text = "Last errors:")
-            status.lastErrors.forEach { error ->
-                Text(text = "• $error")
+
+        if (logEntries.isNotEmpty()) {
+            HorizontalDivider()
+            Text(text = "Логи запуска")
+            logEntries.takeLast(3).forEach { entry ->
+                Text(text = entry.format())
             }
         }
 
@@ -47,10 +60,20 @@ fun AgentStatusScreen(
 
 @Composable
 private fun ProgressSection(progress: AgentProgress) {
-    Text(
-        text = "Progress: ${progress.subnetsCompleted}/${progress.subnetsTotal} subnets, " +
-            "${progress.ipsTested} IPs tested",
+    InfoRow(
+        label = "Progress",
+        value = "${progress.subnetsCompleted}/${progress.subnetsTotal}",
     )
+    InfoRow(label = "Subnets", value = progress.subnetsCompleted.toString())
+    InfoRow(label = "IPs tested", value = progress.ipsTested.toString())
+}
+
+@Composable
+private fun InfoRow(
+    label: String,
+    value: String,
+) {
+    Text(text = "$label: $value")
 }
 
 @Composable
