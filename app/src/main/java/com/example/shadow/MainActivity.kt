@@ -68,7 +68,7 @@ private fun AppContent() {
     val simManager = remember { SimManager(context) }
     val scope = rememberCoroutineScope()
 
-    val screen = rememberSaveable { mutableStateOf(AppScreen.REGISTRATION) }
+    val screen = rememberSaveable { mutableStateOf(AppScreen.SETTINGS) }
     val permissions = remember {
         mutableStateOf(
             listOf(
@@ -163,14 +163,11 @@ private fun AppContent() {
                     progress = AgentProgress(subnetsTotal = 0, subnetsCompleted = 0, ipsTested = 0),
                     lastErrors = emptyList(),
                 )
-                AgentStatusScreen(status = status)
+                AgentStatusScreen(
+                    status = status,
+                    hwid = hwid,
+                )
             }
         }
-
-        Text(
-            text = "HWID: $hwid",
-            style = MaterialTheme.typography.labelSmall,
-            modifier = Modifier.padding(padding),
-        )
     }
 }
