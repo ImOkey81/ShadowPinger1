@@ -4,10 +4,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.example.shadow.core.agent.AgentProgress
 import com.example.shadow.core.agent.AgentStatus
@@ -49,6 +53,8 @@ fun AgentStatusScreen(
                 Text(text = entry.format())
             }
         }
+
+        DebugLogsSection(logEntries = logEntries)
     }
 }
 
@@ -68,4 +74,29 @@ private fun InfoRow(
     value: String,
 ) {
     Text(text = "$label: $value")
+}
+
+@Composable
+private fun DebugLogsSection(logEntries: List<LogEntry>) {
+    val clipboardManager = LocalClipboardManager.current
+    val logText = logEntries.joinToString("\n") { it.format() }
+
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(text = "Debug logs (${logEntries.size}/500)")
+        Button(
+            onClick = { clipboardManager.setText(AnnotatedString(logText)) },
+            enabled = logEntries.isNotEmpty(),
+        ) {
+            Text(text = "Copy logs")
+        }
+        if (logEntries.isEmpty()) {
+            Text(text = "No logs yet.")
+        } else {
+            LazyColumn {
+                items(logEntries) { entry ->
+                    Text(text = entry.format())
+                }
+            }
+        }
+    }
 }
