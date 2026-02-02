@@ -5,8 +5,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
@@ -19,13 +19,13 @@ import com.example.shadow.core.telephony.SimInfo
 
 @Composable
 fun SettingsScreen(
-    permissions: List<PermissionItem>,
+    permissions: Map<String, Boolean>,
     simCards: List<SimInfo>,
     simMappings: Map<Int, Operator?>,
-    onPermissionToggle: (PermissionItem) -> Unit,
+    onPermissionToggle: (String) -> Unit,
     onOperatorSelected: (subscriptionId: Int, operator: Operator) -> Unit,
-    onContinue: () -> Unit,
-    canContinue: Boolean,
+    onStartForeground: () -> Unit,
+    onStopForeground: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -33,25 +33,42 @@ fun SettingsScreen(
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text(text = "Permissions")
-        permissions.forEach { item ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text(text = item.label)
-                Button(onClick = { onPermissionToggle(item) }) {
-                    Text(text = if (item.granted) "Granted" else "Grant")
-                }
+        Text(text = "Настройки")
+        Text(text = "Разрешения:")
+        PermissionRow(
+            title = "Foreground service",
+            isGranted = permissions["foreground"] == true,
+            onClick = onStartForeground,
+        )
+        PermissionRow(
+            title = "Оптимизация заряда батареи",
+            isGranted = permissions["battery"] == true,
+            onClick = { onPermissionToggle("battery") },
+        )
+        PermissionRow(
+            title = "Доступ к мобильной сети",
+            isGranted = permissions["network"] == true,
+            onClick = { onPermissionToggle("network") },
+        )
+        PermissionRow(
+            title = "Доступ к SIM-карте",
+            isGranted = permissions["sim"] == true,
+            onClick = { onPermissionToggle("sim") },
+        )
+
+        if (permissions["foreground"] == true) {
+            Button(onClick = onStopForeground) {
+                Text(text = "Остановить foreground сервис")
             }
         }
 
         HorizontalDivider()
 
-        Text(text = "SIM cards")
+        Text(text = "SIM-карты")
         simCards.forEach { sim ->
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(text = "${sim.displayName} • ${sim.carrierName} • slot ${sim.slotIndex}")
+                Text(text = "Локальное имя: ${sim.displayName}")
+                Text(text = "UID SIM: ${sim.subscriptionId}")
                 OperatorSelector(
                     selected = simMappings[sim.subscriptionId],
                     onSelected = { operator -> onOperatorSelected(sim.subscriptionId, operator) },
@@ -60,11 +77,25 @@ fun SettingsScreen(
         }
 
         Spacer(modifier = Modifier.height(8.dp))
-        if (!canContinue) {
-            Text(text = "Map all SIMs and grant required permissions to activate the agent.")
+        Button(onClick = { /* TODO: add SIM flow */ }, enabled = simCards.isNotEmpty()) {
+            Text(text = "Добавить SIM")
         }
-        Button(onClick = onContinue, enabled = canContinue) {
-            Text(text = "Continue")
+    }
+}
+
+@Composable
+private fun PermissionRow(
+    title: String,
+    isGranted: Boolean,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(text = title)
+        Button(onClick = onClick) {
+            Text(text = if (isGranted) "Разрешено" else "Разрешить")
         }
     }
 }
@@ -75,7 +106,7 @@ private fun OperatorSelector(
     onSelected: (Operator) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(text = "Operator")
+        Text(text = "Оператор")
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Operator.values().forEach { operator ->
                 FilterChip(
@@ -87,9 +118,3 @@ private fun OperatorSelector(
         }
     }
 }
-
-data class PermissionItem(
-    val key: String,
-    val label: String,
-    val granted: Boolean,
-)

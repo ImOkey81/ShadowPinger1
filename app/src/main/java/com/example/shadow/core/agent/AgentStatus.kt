@@ -3,9 +3,13 @@ package com.example.shadow.core.agent
 import com.example.shadow.core.telephony.Operator
 
 data class AgentStatus(
+    val deviceId: String,
     val state: AgentState,
     val activeOperator: Operator?,
     val activeSimLabel: String?,
+    val isConnected: Boolean,
+    val tasksCompleted: Int,
+    val subnetsTested: Int,
     val jobId: String?,
     val progress: AgentProgress,
     val lastErrors: List<String>,
