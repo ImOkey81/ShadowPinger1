@@ -4,11 +4,16 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateMapOf
@@ -18,6 +23,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import com.example.shadow.core.agent.AgentProgress
 import com.example.shadow.core.agent.AgentRepository
 import com.example.shadow.core.agent.AgentState
@@ -82,7 +88,31 @@ private fun AppContent() {
         }
     }
 
-    Scaffold(modifier = Modifier.fillMaxSize()) { padding ->
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        bottomBar = {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                TextButton(onClick = { screen.value = AppScreen.REGISTRATION }) {
+                    Text(text = "Registration")
+                }
+                TextButton(onClick = { screen.value = AppScreen.AUTHORIZATION }) {
+                    Text(text = "Authorization")
+                }
+                TextButton(onClick = { screen.value = AppScreen.SETTINGS }) {
+                    Text(text = "Settings")
+                }
+                TextButton(onClick = { screen.value = AppScreen.STATUS }) {
+                    Text(text = "Status")
+                }
+            }
+        },
+    ) { padding ->
         when (screen.value) {
             AppScreen.REGISTRATION -> RegistrationScreen { _, _ ->
                 stateMachine.transition(AgentState.REGISTERED)
