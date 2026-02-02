@@ -4,20 +4,24 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberSaveable
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import com.example.shadow.core.agent.AgentProgress
 import com.example.shadow.core.agent.AgentRepository
 import com.example.shadow.core.agent.AgentState
@@ -62,7 +66,7 @@ private fun AppContent() {
     val simManager = remember { SimManager(context) }
     val scope = rememberCoroutineScope()
 
-    val screen = rememberSaveable { mutableStateOf(AppScreen.REGISTRATION) }
+    val screen = rememberSaveable { mutableStateOf(AppScreen.SETTINGS) }
     val permissions = remember {
         mutableStateOf(
             listOf(
@@ -82,9 +86,27 @@ private fun AppContent() {
         }
     }
 
-    Scaffold(modifier = Modifier.fillMaxSize()) { padding ->
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        bottomBar = {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                TextButton(onClick = { screen.value = AppScreen.SETTINGS }) {
+                    Text(text = "Настройки")
+                }
+                TextButton(onClick = { screen.value = AppScreen.STATUS }) {
+                    Text(text = "Статус")
+                }
+            }
+        },
+    ) { _ ->
         when (screen.value) {
-            AppScreen.REGISTRATION -> RegistrationScreen {
+            AppScreen.REGISTRATION -> RegistrationScreen { _, _ ->
                 stateMachine.transition(AgentState.REGISTERED)
                 screen.value = AppScreen.AUTHORIZATION
             }
@@ -133,14 +155,11 @@ private fun AppContent() {
                     progress = AgentProgress(subnetsTotal = 0, subnetsCompleted = 0, ipsTested = 0),
                     lastErrors = emptyList(),
                 )
-                AgentStatusScreen(status = status)
+                AgentStatusScreen(
+                    status = status,
+                    hwid = hwid,
+                )
             }
         }
-
-        Text(
-            text = "HWID: $hwid",
-            style = MaterialTheme.typography.labelSmall,
-            modifier = Modifier.padding(padding),
-        )
     }
 }
