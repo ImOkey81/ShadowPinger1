@@ -15,7 +15,7 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberSaveable
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.example.shadow.core.agent.AgentProgress
@@ -84,7 +84,7 @@ private fun AppContent() {
 
     Scaffold(modifier = Modifier.fillMaxSize()) { padding ->
         when (screen.value) {
-            AppScreen.REGISTRATION -> RegistrationScreen {
+            AppScreen.REGISTRATION -> RegistrationScreen { _, _ ->
                 stateMachine.transition(AgentState.REGISTERED)
                 screen.value = AppScreen.AUTHORIZATION
             }
