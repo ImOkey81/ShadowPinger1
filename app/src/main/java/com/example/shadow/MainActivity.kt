@@ -97,7 +97,27 @@ private fun AppContent() {
         logBuffer.add("State restored: ${stateMachine.currentState}")
     }
 
-    Scaffold(modifier = Modifier.fillMaxSize()) { padding ->
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        bottomBar = {
+            if (screen.value == AppScreen.SETTINGS || screen.value == AppScreen.STATUS) {
+                NavigationBar {
+                    NavigationBarItem(
+                        selected = screen.value == AppScreen.SETTINGS,
+                        onClick = { screen.value = AppScreen.SETTINGS },
+                        label = { Text("Настройки") },
+                        icon = {},
+                    )
+                    NavigationBarItem(
+                        selected = screen.value == AppScreen.STATUS,
+                        onClick = { screen.value = AppScreen.STATUS },
+                        label = { Text("Статус") },
+                        icon = {},
+                    )
+                }
+            }
+        },
+    ) { padding ->
         when (screen.value) {
             AppScreen.REGISTRATION -> RegistrationScreen { login, password ->
                 val moved = stateMachine.transition(AgentState.REGISTERED)
