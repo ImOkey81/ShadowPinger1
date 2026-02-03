@@ -10,10 +10,14 @@ import android.telephony.TelephonyManager
 import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 
-class SimManager(private val context: Context) {
+interface SimProvider {
+    fun getAllSimCards(): List<SimInfo>
+}
+
+class SimManager(private val context: Context) : SimProvider {
     @RequiresApi(Build.VERSION_CODES.P)
     @SuppressLint("MissingPermission")
-    fun getAllSimCards(): List<SimInfo> {
+    override fun getAllSimCards(): List<SimInfo> {
         val subscriptionManager =
             context.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE)
                     as SubscriptionManager
