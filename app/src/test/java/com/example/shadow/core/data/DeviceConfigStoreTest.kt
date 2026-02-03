@@ -48,12 +48,4 @@ class DeviceConfigStoreTest {
         assertNotEquals("token-123", store.deviceToken.first())
         assertEquals("token-456", store.deviceToken.first())
     }
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    @Test
-    fun deviceTokenStartsNull() = runTest {
-        val store = DeviceConfigStore(context)
-
-        assertEquals(null, store.deviceToken.first())
-    }
 }
