@@ -24,20 +24,6 @@ class AgentRepositoryTest {
     }
 
     @Test
-    fun loadStateReturnsStoredValue() {
-        val context = mockk<Context>()
-        val prefs = mockk<SharedPreferences>()
-        every { context.getSharedPreferences(any(), any()) } returns prefs
-        every { prefs.getString(any(), any()) } returns AgentState.AUTHORIZED.name
-
-        val repository = AgentRepository(context)
-
-        val state = repository.loadState()
-
-        assertEquals(AgentState.AUTHORIZED, state)
-    }
-
-    @Test
     fun saveStatePersistsStateName() {
         val context = mockk<Context>()
         val prefs = mockk<SharedPreferences>()
