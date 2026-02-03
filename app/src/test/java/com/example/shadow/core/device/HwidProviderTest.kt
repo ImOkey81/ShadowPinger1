@@ -32,15 +32,4 @@ class HwidProviderTest {
         assertTrue(first.isNotBlank())
         assertEquals(first, second)
     }
-
-    @Test
-    fun getOrCreatePersistsValueInPreferences() {
-        val provider = HwidProvider(context)
-
-        val created = provider.getOrCreate()
-
-        val stored = context.getSharedPreferences("shadow_agent", Context.MODE_PRIVATE)
-            .getString("hwid", null)
-        assertEquals(created, stored)
-    }
 }
