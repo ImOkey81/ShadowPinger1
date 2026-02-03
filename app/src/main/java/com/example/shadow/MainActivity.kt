@@ -32,6 +32,7 @@ import com.example.shadow.core.data.DeviceConfigStore
 import com.example.shadow.core.logging.LogBuffer
 import com.example.shadow.core.service.AgentForegroundService
 import com.example.shadow.core.telephony.Operator
+import com.example.shadow.core.telephony.SimProvider
 import com.example.shadow.core.telephony.SimManager
 import com.example.shadow.ui.screens.AgentStatusScreen
 import com.example.shadow.ui.screens.AuthorizationScreen
@@ -67,7 +68,13 @@ private fun AppContent() {
     val stateMachine = remember { AgentStateMachine(repository) }
     val deviceConfigStore = remember { DeviceConfigStore(context) }
     val logBuffer = remember { LogBuffer() }
-    val simManager = remember { SimManager(context) }
+    val simProvider: SimProvider = remember {
+        if (BuildConfig.DEBUG) {
+            FakeSimProvider()
+        } else {
+            SimManager(context)
+        }
+    }
     val scope = rememberCoroutineScope()
     val logEntries by logBuffer.entries.collectAsState()
 
@@ -84,7 +91,7 @@ private fun AppContent() {
         )
     }
     val simMappings = remember { mutableStateMapOf<Int, Operator?>() }
-    val simCards = remember { mutableStateOf(simManager.getAllSimCards()) }
+    val simCards = remember { mutableStateOf(simProvider.getAllSimCards()) }
     var isForegroundRunning by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
