@@ -65,14 +65,18 @@ fun SettingsScreen(
         HorizontalDivider()
 
         Text(text = "SIM-карты")
-        simCards.forEach { sim ->
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(text = "Локальное имя: ${sim.displayName}")
-                Text(text = "UID SIM: ${sim.subscriptionId}")
-                OperatorSelector(
-                    selected = simMappings[sim.subscriptionId],
-                    onSelected = { operator -> onOperatorSelected(sim.subscriptionId, operator) },
-                )
+        if (simCards.isEmpty()) {
+            Text(text = "SIM-карты не обнаружены на устройстве.")
+        } else {
+            simCards.forEach { sim ->
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(text = "Локальное имя: ${sim.displayName}")
+                    Text(text = "UID SIM: ${sim.subscriptionId}")
+                    OperatorSelector(
+                        selected = simMappings[sim.subscriptionId],
+                        onSelected = { operator -> onOperatorSelected(sim.subscriptionId, operator) },
+                    )
+                }
             }
         }
 
