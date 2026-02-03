@@ -5,10 +5,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -16,14 +15,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
@@ -34,9 +32,14 @@ import com.example.shadow.core.agent.AgentStateMachine
 import com.example.shadow.core.agent.AgentStatus
 import com.example.shadow.core.data.DeviceConfigStore
 import com.example.shadow.core.logging.LogBuffer
+import com.example.shadow.core.service.AgentForegroundService
+import com.example.shadow.core.telephony.FakeSimProvider
 import com.example.shadow.core.telephony.Operator
+import com.example.shadow.core.telephony.SimProvider
 import com.example.shadow.core.telephony.SimManager
 import com.example.shadow.ui.screens.AgentStatusScreen
+import com.example.shadow.ui.screens.AuthorizationScreen
+import com.example.shadow.ui.screens.RegistrationScreen
 import com.example.shadow.ui.screens.SettingsScreen
 import com.example.shadow.ui.theme.ShadowTheme
 import java.util.UUID
@@ -55,6 +58,8 @@ class MainActivity : ComponentActivity() {
 }
 
 private enum class AppScreen {
+    REGISTRATION,
+    AUTHORIZATION,
     SETTINGS,
     STATUS,
 }
@@ -66,7 +71,13 @@ private fun AppContent() {
     val stateMachine = remember { AgentStateMachine(repository) }
     val deviceConfigStore = remember { DeviceConfigStore(context) }
     val logBuffer = remember { LogBuffer() }
-    val simManager = remember { SimManager(context) }
+    val simProvider: SimProvider = remember {
+        if (BuildConfig.DEBUG) {
+            FakeSimProvider()
+        } else {
+            SimManager(context)
+        }
+    }
     val scope = rememberCoroutineScope()
     val logEntries by logBuffer.entries.collectAsState()
 
@@ -74,16 +85,16 @@ private fun AppContent() {
     var deviceId by remember { mutableStateOf("loading...") }
     val permissions = remember {
         mutableStateOf(
-            listOf(
-                PermissionItem("foreground", "Foreground service", false),
-                PermissionItem("battery", "Ignore battery optimizations", false),
-                PermissionItem("network", "Mobile network access", false),
-                PermissionItem("sim", "SIM access", false),
+            mapOf(
+                "foreground" to false,
+                "battery" to false,
+                "network" to false,
+                "sim" to false,
             )
         )
     }
     val simMappings = remember { mutableStateMapOf<Int, Operator?>() }
-    val simCards = remember { mutableStateOf(simManager.getAllSimCards()) }
+    val simCards = remember { mutableStateOf(simProvider.getAllSimCards()) }
     var isForegroundRunning by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
@@ -96,7 +107,27 @@ private fun AppContent() {
         logBuffer.add("State restored: ${stateMachine.currentState}")
     }
 
-    Scaffold(modifier = Modifier.fillMaxSize()) { padding ->
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        bottomBar = {
+            if (screen.value == AppScreen.SETTINGS || screen.value == AppScreen.STATUS) {
+                NavigationBar {
+                    NavigationBarItem(
+                        selected = screen.value == AppScreen.SETTINGS,
+                        onClick = { screen.value = AppScreen.SETTINGS },
+                        label = { Text("Настройки") },
+                        icon = {},
+                    )
+                    NavigationBarItem(
+                        selected = screen.value == AppScreen.STATUS,
+                        onClick = { screen.value = AppScreen.STATUS },
+                        label = { Text("Статус") },
+                        icon = {},
+                    )
+                }
+            }
+        },
+    ) { padding ->
         when (screen.value) {
             AppScreen.REGISTRATION -> RegistrationScreen { login, password ->
                 val moved = stateMachine.transition(AgentState.REGISTERED)
@@ -116,46 +147,46 @@ private fun AppContent() {
                 permissions = permissions.value,
                 simCards = simCards.value,
                 simMappings = simMappings,
-                onPermissionToggle = { item ->
-                    permissions.value = permissions.value.map { existing ->
-                        if (existing.key == item.key) {
-                            existing.copy(granted = !existing.granted)
-                        } else {
-                            existing
-                        }
-                    }
-                    logBuffer.add("Permission ${item.key} toggled to ${!item.granted}")
+                onPermissionToggle = { key ->
+                    val updated = permissions.value.toMutableMap()
+                    updated[key] = !(updated[key] ?: false)
+                    permissions.value = updated
+                    logBuffer.add("Permission $key toggled to ${updated[key]}")
                 },
                 onOperatorSelected = { subscriptionId, operator ->
                     simMappings[subscriptionId] = operator
                     logBuffer.add("SIM $subscriptionId mapped to operator ${operator.name}")
                 },
-                onContinue = {
-                    listOf(
-                        AgentState.PERMISSIONS_GRANTED,
-                        AgentState.SIMS_MAPPED,
-                        AgentState.KAFKA_REGISTERED,
-                        AgentState.IDLE,
-                    ).forEach { nextState ->
-                        val moved = stateMachine.transition(nextState)
-                        logBuffer.add("State transition to $nextState (moved=$moved)")
+                onStartForeground = {
+                    val intent = Intent(context, AgentForegroundService::class.java)
+                    ContextCompat.startForegroundService(context, intent)
+                    permissions.value = permissions.value.toMutableMap().apply {
+                        this["foreground"] = true
                     }
-                    screen.value = AppScreen.STATUS
-                    scope.launch {
-                        simCards.value = simManager.getAllSimCards()
-                    }
+                    isForegroundRunning = true
+                    logBuffer.add("Foreground service started")
                 },
-                canContinue = permissions.value.all { it.granted } &&
-                    simCards.value.isNotEmpty() &&
-                    simCards.value.all { simMappings[it.subscriptionId] != null },
+                onStopForeground = {
+                    val intent = Intent(context, AgentForegroundService::class.java)
+                    context.stopService(intent)
+                    permissions.value = permissions.value.toMutableMap().apply {
+                        this["foreground"] = false
+                    }
+                    isForegroundRunning = false
+                    logBuffer.add("Foreground service stopped")
+                },
                 )
             AppScreen.STATUS -> {
                 val activeSim = simCards.value.firstOrNull()
                 val activeOperator = activeSim?.subscriptionId?.let { simMappings[it] }
                 val status = AgentStatus(
+                    deviceId = deviceId,
                     state = stateMachine.currentState,
                     activeOperator = activeOperator,
                     activeSimLabel = activeSim?.displayName,
+                    isConnected = isForegroundRunning,
+                    tasksCompleted = 0,
+                    subnetsTested = 0,
                     jobId = null,
                     progress = AgentProgress(subnetsTotal = 0, subnetsCompleted = 0, ipsTested = 0),
                     lastErrors = emptyList(),
